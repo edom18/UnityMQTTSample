@@ -22,9 +22,12 @@ public class MqttSample : MonoBehaviour
 
     private IMqttClient _mqttClient;
     private IMqttClientOptions _mqttClientOptions;
+    private SynchronizationContext _unityContext;
 
     private void Start()
     {
+        _unityContext = SynchronizationContext.Current;
+
         _connectButton.onClick.AddListener(async () =>
         {
             try
@@ -36,7 +39,7 @@ public class MqttSample : MonoBehaviour
             catch (Exception e)
             {
                 Debug.LogError($"Failed to connect to MQTT broker: {e.Message}");
-                
+
                 _statusText.text = "Failed to connect";
                 _connectButton.interactable = true;
             }
@@ -63,8 +66,11 @@ public class MqttSample : MonoBehaviour
     {
         Debug.Log("MQTT broker connected.");
 
-        _statusText.text = "Connected";
-        _publishButton.interactable = true;
+        _unityContext.Post(_ =>
+        {
+            _statusText.text = "Connected";
+            _publishButton.interactable = true;
+        }, null);
 
         await _mqttClient.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(_topic).Build());
 
@@ -78,17 +84,26 @@ public class MqttSample : MonoBehaviour
             Debug.Log("MQTT client is null or already disposed.");
             return;
         }
-        
+
         Debug.Log("MQTT broker disconnected.");
-        
-        _statusText.text = "Disconnected";
-        _connectButton.interactable = true;
+
+        _unityContext.Post(_ =>
+        {
+            _statusText.text = "Disconnected";
+            _connectButton.interactable = true;
+            _publishButton.interactable = false;
+        }, null);
     }
 
     private void OnAppMessage(MqttApplicationMessageReceivedEventArgs args)
     {
         string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
         Debug.Log($"Received message: Topic = {args.ApplicationMessage.Topic}, Payload = {payload}");
+        
+        _unityContext.Post(_ =>
+        {
+            _receivedText.text = payload;
+        }, null);
     }
 
     private async void Publish()
