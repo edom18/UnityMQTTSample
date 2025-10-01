@@ -1288,7 +1288,7 @@ GameObject:
   - component: {fileID: 1510331933}
   - component: {fileID: 1510331932}
   m_Layer: 0
-  m_Name: MqttSample
+  m_Name: MqttClientSample
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1307,7 +1307,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _host: 192.168.11.20
-  _topic: quest/volume
+  _topic: get/volume
+  _username: username
+  _password: password
+  _port: 1883
+  _useCredentials: 0
+  _useTls: 0
   _connectButton: {fileID: 1224836211}
   _publishButton: {fileID: 1582141484}
   _statusText: {fileID: 1599312068}
