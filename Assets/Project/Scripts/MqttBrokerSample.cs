@@ -1,5 +1,8 @@
 using UnityEngine;
 using System;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using MQTTnet;
@@ -15,6 +18,11 @@ public class MqttBrokerSample : MonoBehaviour
     private void Awake()
     {
         _ = Setup();
+    }
+
+    private void OnDestroy()
+    {
+        _mqttServer.StopAsync();
     }
 
     private async Task Setup()
@@ -63,9 +71,15 @@ public class MqttBrokerSample : MonoBehaviour
             });
 
         // 3) イベント購読（ログ代わり）
-        _mqttServer.ClientConnectedHandler = new MqttServerClientConnectedHandlerDelegate(args => { Debug.Log($"[Connected] ClientId={args.ClientId}"); });
+        _mqttServer.ClientConnectedHandler = new MqttServerClientConnectedHandlerDelegate(args =>
+        {
+            Debug.Log($"[Connected] ClientId={args.ClientId}");
+        });
 
-        _mqttServer.ClientDisconnectedHandler = new MqttServerClientDisconnectedHandlerDelegate(args => { Debug.Log($"[Disconnected] ClientId={args.ClientId} Reason={args.DisconnectType}"); });
+        _mqttServer.ClientDisconnectedHandler = new MqttServerClientDisconnectedHandlerDelegate(args =>
+        {
+            Debug.Log($"[Disconnected] ClientId={args.ClientId} Reason={args.DisconnectType}");
+        });
 
         _mqttServer.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(args =>
         {
@@ -83,11 +97,33 @@ public class MqttBrokerSample : MonoBehaviour
         IMqttServerOptions options = optionsBuilder.Build();
         await _mqttServer.StartAsync(options);
 
-        Debug.Log("MQTT broker started on tcp://0.0.0.0:1883");
+        string ip = GetLocalIPAddress();
+        Debug.Log($"MQTT broker started on {ip}:{_port}");
     }
 
-    private void OnDestroy()
+    /// <summary>
+    /// Get the Host IPv4 adress
+    /// </summary>
+    /// <returns>IPv4 address</returns>
+    public static string GetLocalIPAddress()
     {
-        _mqttServer.StopAsync();
+        NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+        var activeEthernetInterfaces = interfaces.Where(i =>
+            i.OperationalStatus == OperationalStatus.Up &&
+            i.NetworkInterfaceType == NetworkInterfaceType.Ethernet &&
+            i.NetworkInterfaceType != NetworkInterfaceType.Loopback);
+        foreach (var networkInterface in activeEthernetInterfaces)
+        {
+            var address = networkInterface.GetIPProperties().UnicastAddresses
+                .Where(a => a.Address.AddressFamily == AddressFamily.InterNetwork)
+                .Select(a => a.Address)
+                .FirstOrDefault();
+            if (address != null)
+            {
+                return address.ToString();
+            }
+        }
+
+        return string.Empty;
     }
 }
