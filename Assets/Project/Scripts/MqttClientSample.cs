@@ -11,10 +11,15 @@ using System.Text;
 using TMPro;
 using UnityEngine.UI;
 
-public class MqttSample : MonoBehaviour
+public class MqttClientSample : MonoBehaviour
 {
     [SerializeField] private string _host = "localhost";
-    [SerializeField] private string _topic = "quest/volume";
+    [SerializeField] private string _topic = "get/volume";
+    [SerializeField] private string _username = "username";
+    [SerializeField] private string _password = "password";
+    [SerializeField] private int _port = 1883;
+    [SerializeField] private bool _useCredentials = false;
+    [SerializeField] private bool _useTls = false;
     [SerializeField] private Button _connectButton;
     [SerializeField] private Button _publishButton;
     [SerializeField] private TMP_Text _statusText;
@@ -49,9 +54,17 @@ public class MqttSample : MonoBehaviour
         _publishButton.onClick.AddListener(Publish);
 
         _mqttClient = new MqttFactory().CreateMqttClient();
-        _mqttClientOptions = new MqttClientOptionsBuilder()
-            .WithTcpServer(_host, 1883)
-            .Build();
+        MqttClientOptionsBuilder optionsBuilder = new MqttClientOptionsBuilder()
+            .WithTcpServer(_host, _port);
+        if (_useCredentials)
+        {
+            optionsBuilder.WithCredentials(_username, _password);
+        }
+        if (_useTls)
+        {
+            optionsBuilder.WithTls();
+        }
+        _mqttClientOptions = optionsBuilder.Build();
 
         _mqttClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(OnAppMessage);
         _mqttClient.ConnectedHandler = new MqttClientConnectedHandlerDelegate(OnConnected);
@@ -99,11 +112,8 @@ public class MqttSample : MonoBehaviour
     {
         string payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload);
         Debug.Log($"Received message: Topic = {args.ApplicationMessage.Topic}, Payload = {payload}");
-        
-        _unityContext.Post(_ =>
-        {
-            _receivedText.text = payload;
-        }, null);
+
+        _unityContext.Post(_ => { _receivedText.text = payload; }, null);
     }
 
     private async void Publish()
