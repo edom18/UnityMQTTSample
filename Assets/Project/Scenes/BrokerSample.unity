@@ -593,7 +593,7 @@ MonoBehaviour:
   _statusText: {fileID: 1599312068}
   _receivedText: {fileID: 157214623}
   _portInputField: {fileID: 893835830}
-  _startButton: {fileID: 1224836211}
+  _button: {fileID: 1224836211}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -1712,7 +1712,7 @@ GameObject:
   - component: {fileID: 1224836212}
   - component: {fileID: 1224836211}
   m_Layer: 5
-  m_Name: ConnectButton
+  m_Name: Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2126,7 +2126,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Not started.
+  m_text: Broker stopped
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

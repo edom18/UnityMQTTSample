@@ -19,7 +19,7 @@ public class MqttBrokerSample : MonoBehaviour
     [SerializeField] private TMP_Text _statusText;
     [SerializeField] private TMP_Text _receivedText;
     [SerializeField] private TMP_InputField _portInputField;
-    [SerializeField] private Button _startButton;
+    [SerializeField] private Button _button;
 
     private IMqttServer _mqttServer;
     private SynchronizationContext _context;
@@ -29,12 +29,9 @@ public class MqttBrokerSample : MonoBehaviour
         // Unityのメインスレッドコンテキストを保存
         // メインスレッドで UI 更新を行うため
         _context = SynchronizationContext.Current;
-        
-        _startButton.onClick.AddListener(() =>
-        {
-            _ = StartBroker();
-        });
-        
+
+        _button.onClick.AddListener(HandleOnClicked);
+
         _portInputField.SetTextWithoutNotify(_port.ToString());
     }
 
@@ -43,10 +40,36 @@ public class MqttBrokerSample : MonoBehaviour
         _mqttServer.StopAsync();
     }
 
+    private void HandleOnClicked()
+    {
+        if (_mqttServer == null)
+        {
+            Launch();
+        }
+        else
+        {
+            Shutdown();
+        }
+    }
+    
+    private void Launch()
+    {
+        _ = StartBroker();
+        _button.GetComponentInChildren<TMP_Text>().text = "Shutdown";
+    }
+
+    private void Shutdown()
+    {
+        _mqttServer?.StopAsync();
+        _mqttServer = null;
+        _statusText.text = "Broker stopped";
+        _button.GetComponentInChildren<TMP_Text>().text = "Launch";
+    }
+
     private async Task StartBroker()
     {
         _portInputField.SetTextWithoutNotify(_port.ToString());
-        
+
         bool success = false;
         try
         {
