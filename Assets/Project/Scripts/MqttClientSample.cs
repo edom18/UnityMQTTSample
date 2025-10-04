@@ -14,7 +14,8 @@ using UnityEngine.UI;
 public class MqttClientSample : MonoBehaviour
 {
     [SerializeField] private string _host = "localhost";
-    [SerializeField] private string _topic = "get/volume";
+    [SerializeField] private string _topic = "send/hello";
+    [SerializeField] private string _payload = "hello";
     [SerializeField] private string _username = "username";
     [SerializeField] private string _password = "password";
     [SerializeField] private int _port = 1883;
@@ -24,9 +25,12 @@ public class MqttClientSample : MonoBehaviour
     [SerializeField] private Button _publishButton;
     [SerializeField] private TMP_Text _statusText;
     [SerializeField] private TMP_Text _receivedText;
+    [SerializeField] private TMP_InputField _hostInputField;
+    [SerializeField] private TMP_InputField _portInputField;
+    [SerializeField] private TMP_InputField _topicInputField;
+    [SerializeField] private TMP_InputField _payloadInputField;
 
     private IMqttClient _mqttClient;
-    private IMqttClientOptions _mqttClientOptions;
     private SynchronizationContext _unityContext;
 
     private void Start()
@@ -39,7 +43,8 @@ public class MqttClientSample : MonoBehaviour
             {
                 _statusText.text = "Connecting...";
                 _connectButton.interactable = false;
-                await _mqttClient.ConnectAsync(_mqttClientOptions);
+                IMqttClientOptions options = CreateClientOptions();
+                await _mqttClient.ConnectAsync(options);
             }
             catch (Exception e)
             {
@@ -53,9 +58,39 @@ public class MqttClientSample : MonoBehaviour
         _publishButton.interactable = false;
         _publishButton.onClick.AddListener(Publish);
 
+        _hostInputField.SetTextWithoutNotify(_host);
+        _portInputField.SetTextWithoutNotify(_port.ToString());
+        _topicInputField.SetTextWithoutNotify(_topic);
+        _payloadInputField.SetTextWithoutNotify(_payload);
+
         _mqttClient = new MqttFactory().CreateMqttClient();
+        _mqttClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(OnAppMessage);
+        _mqttClient.ConnectedHandler = new MqttClientConnectedHandlerDelegate(OnConnected);
+        _mqttClient.DisconnectedHandler = new MqttClientDisconnectedHandlerDelegate(OnDisconnected);
+    }
+    
+    private IMqttClientOptions CreateClientOptions()
+    {
+        string host = _hostInputField.text;
+        if (string.IsNullOrEmpty(host))
+        {
+            host = "localhost";
+        }
+
+        if (!int.TryParse(_portInputField.text, out int port))
+        {
+            port = 1883;
+        }
+
+        string topic = _topicInputField.text;
+        if (string.IsNullOrEmpty(topic))
+        {
+            topic = "get/volume";
+        }
+        _topic = topic;
+
         MqttClientOptionsBuilder optionsBuilder = new MqttClientOptionsBuilder()
-            .WithTcpServer(_host, _port);
+            .WithTcpServer(host, port);
         if (_useCredentials)
         {
             optionsBuilder.WithCredentials(_username, _password);
@@ -64,15 +99,7 @@ public class MqttClientSample : MonoBehaviour
         {
             optionsBuilder.WithTls();
         }
-        _mqttClientOptions = optionsBuilder.Build();
-
-        _mqttClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(OnAppMessage);
-        _mqttClient.ConnectedHandler = new MqttClientConnectedHandlerDelegate(OnConnected);
-        _mqttClient.DisconnectedHandler = new MqttClientDisconnectedHandlerDelegate(OnDisconnected);
-    }
-
-    private void Update()
-    {
+        return optionsBuilder.Build();
     }
 
     private async void OnConnected(MqttClientConnectedEventArgs args)
@@ -84,6 +111,13 @@ public class MqttClientSample : MonoBehaviour
             _statusText.text = "Connected";
             _publishButton.interactable = true;
         }, null);
+
+        if (string.IsNullOrEmpty(_topicInputField.text))
+        {
+            Debug.Log("Topic is empty. Subscription skipped.");
+            _receivedText.text = "Topic is empty. Please enter a valid topic.";
+            return;
+        }
 
         await _mqttClient.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic(_topic).Build());
 
@@ -124,7 +158,7 @@ public class MqttClientSample : MonoBehaviour
 
             MqttApplicationMessage message = new MqttApplicationMessageBuilder()
                 .WithTopic(_topic)
-                .WithPayload("{\"volume\":8}")
+                .WithPayload(_payloadInputField.text)
                 .WithAtLeastOnceQoS()
                 .WithRetainFlag()
                 .Build();
