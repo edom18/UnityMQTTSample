@@ -37,6 +37,8 @@ public class MqttBrokerSample : MonoBehaviour
 
     private async Task Setup()
     {
+        bool success = false;
+
         try
         {
             // 1) サーバ（ブローカー）生成
@@ -86,16 +88,30 @@ public class MqttBrokerSample : MonoBehaviour
             // 4) サーバ起動
             IMqttServerOptions options = optionsBuilder.Build();
             await _mqttServer.StartAsync(options);
-
-            string ip = GetLocalIPAddress();
-            string status = $"MQTT broker started on {ip}:{_port}";
-            _statusText.text = status;
-            Debug.Log(status);
-
+            success = true;
         }
         catch (Exception e)
         {
-            Debug.LogError($"Failed to start MQTT broker: {e.Message}");
+            if (e.Message.ToLower().Contains("Address already in use".ToLower()))
+            {
+                // NOTE: なぜか Android だと正常にサーバが起動しても "Address already in use" 例外が発生するので無視する
+                success = true;
+            }
+            else
+            {
+                Debug.LogError($"Failed to start MQTT broker: {e.Message}");
+            }
+        }
+        finally
+        {
+            if (success)
+            {
+                string ip = GetLocalIPAddress();
+                string hostInfo = ip != string.Empty ? $"{ip}:{_port}" : $"localhost:{_port}";
+                Debug.Log($"MQTT broker started at {hostInfo}");
+
+                _context.Post(_ => { _statusText.text = $"Broker started at {hostInfo}"; }, null);
+            }
         }
     }
 
