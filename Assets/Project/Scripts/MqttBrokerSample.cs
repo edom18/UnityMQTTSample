@@ -11,12 +11,15 @@ using MQTTnet;
 using MQTTnet.Client.Receiving;
 using MQTTnet.Server;
 using TMPro;
+using UnityEngine.UI;
 
 public class MqttBrokerSample : MonoBehaviour
 {
     [SerializeField] private int _port = 1883;
     [SerializeField] private TMP_Text _statusText;
     [SerializeField] private TMP_Text _receivedText;
+    [SerializeField] private TMP_InputField _portInputField;
+    [SerializeField] private Button _startButton;
 
     private IMqttServer _mqttServer;
     private SynchronizationContext _context;
@@ -27,7 +30,12 @@ public class MqttBrokerSample : MonoBehaviour
         // メインスレッドで UI 更新を行うため
         _context = SynchronizationContext.Current;
         
-        _ = Setup();
+        _startButton.onClick.AddListener(() =>
+        {
+            _ = StartBroker();
+        });
+        
+        _portInputField.SetTextWithoutNotify(_port.ToString());
     }
 
     private void OnDestroy()
@@ -35,10 +43,11 @@ public class MqttBrokerSample : MonoBehaviour
         _mqttServer.StopAsync();
     }
 
-    private async Task Setup()
+    private async Task StartBroker()
     {
+        _portInputField.SetTextWithoutNotify(_port.ToString());
+        
         bool success = false;
-
         try
         {
             // 1) サーバ（ブローカー）生成
