@@ -29,6 +29,7 @@ public class MqttClientSample : MonoBehaviour
     [SerializeField] private TMP_InputField _portInputField;
     [SerializeField] private TMP_InputField _topicInputField;
     [SerializeField] private TMP_InputField _payloadInputField;
+    [SerializeField] private Button _backButton;
 
     private IMqttClient _mqttClient;
     private SynchronizationContext _unityContext;
@@ -46,11 +47,22 @@ public class MqttClientSample : MonoBehaviour
         _portInputField.SetTextWithoutNotify(_port.ToString());
         _topicInputField.SetTextWithoutNotify(_topic);
         _payloadInputField.SetTextWithoutNotify(_payload);
+        
+        _backButton.onClick.AddListener(() =>
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Launcher");
+        });
 
         _mqttClient = new MqttFactory().CreateMqttClient();
         _mqttClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(OnAppMessage);
         _mqttClient.ConnectedHandler = new MqttClientConnectedHandlerDelegate(OnConnected);
         _mqttClient.DisconnectedHandler = new MqttClientDisconnectedHandlerDelegate(OnDisconnected);
+    }
+
+    private void OnDestroy()
+    {
+        _mqttClient?.Dispose();
+        _mqttClient = null;
     }
 
     private void HandleOnConnectButtonClicked()
@@ -188,11 +200,5 @@ public class MqttClientSample : MonoBehaviour
         {
             Debug.Log($"Failed to publish message: {e.Message}");
         }
-    }
-
-    private void OnDestroy()
-    {
-        _mqttClient?.Dispose();
-        _mqttClient = null;
     }
 }

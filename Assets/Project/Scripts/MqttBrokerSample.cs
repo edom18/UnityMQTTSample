@@ -20,6 +20,7 @@ public class MqttBrokerSample : MonoBehaviour
     [SerializeField] private TMP_Text _receivedText;
     [SerializeField] private TMP_InputField _portInputField;
     [SerializeField] private Button _button;
+    [SerializeField] private Button _backButton;
 
     private IMqttServer _mqttServer;
     private SynchronizationContext _context;
@@ -33,11 +34,17 @@ public class MqttBrokerSample : MonoBehaviour
         _button.onClick.AddListener(HandleOnClicked);
 
         _portInputField.SetTextWithoutNotify(_port.ToString());
+        
+        _backButton.onClick.AddListener(() =>
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Launcher");
+        });
     }
 
     private void OnDestroy()
     {
-        _mqttServer.StopAsync();
+        _mqttServer?.Dispose();
+        _mqttServer = null;
     }
 
     private void HandleOnClicked()
