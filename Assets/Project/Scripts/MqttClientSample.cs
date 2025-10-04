@@ -72,6 +72,9 @@ public class MqttClientSample : MonoBehaviour
             _mqttClient.DisconnectAsync();
             _statusText.text = "Disconnected";
             _connectButton.GetComponentInChildren<TMP_Text>().text = "Connect";
+            _topicInputField.interactable = true;
+            _hostInputField.interactable = true;
+            _portInputField.interactable = true;
         }
         else
         {
@@ -85,6 +88,9 @@ public class MqttClientSample : MonoBehaviour
         {
             _statusText.text = "Connecting...";
             _connectButton.interactable = false;
+            _topicInputField.interactable = false;
+            _hostInputField.interactable = false;
+            _portInputField.interactable = false;
 
             IMqttClientOptions options = CreateClientOptions();
             await _mqttClient.ConnectAsync(options, CancellationToken.None);
@@ -95,6 +101,9 @@ public class MqttClientSample : MonoBehaviour
 
             _statusText.text = "Failed to connect";
             _connectButton.interactable = true;
+            _topicInputField.interactable = true;
+            _hostInputField.interactable = true;
+            _portInputField.interactable = true;
         }
     }
     
