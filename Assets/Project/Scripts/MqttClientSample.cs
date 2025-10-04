@@ -37,23 +37,7 @@ public class MqttClientSample : MonoBehaviour
     {
         _unityContext = SynchronizationContext.Current;
 
-        _connectButton.onClick.AddListener(async () =>
-        {
-            try
-            {
-                _statusText.text = "Connecting...";
-                _connectButton.interactable = false;
-                IMqttClientOptions options = CreateClientOptions();
-                await _mqttClient.ConnectAsync(options);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Failed to connect to MQTT broker: {e.Message}");
-
-                _statusText.text = "Failed to connect";
-                _connectButton.interactable = true;
-            }
-        });
+        _connectButton.onClick.AddListener(HandleOnConnectButtonClicked);
 
         _publishButton.interactable = false;
         _publishButton.onClick.AddListener(Publish);
@@ -67,6 +51,39 @@ public class MqttClientSample : MonoBehaviour
         _mqttClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(OnAppMessage);
         _mqttClient.ConnectedHandler = new MqttClientConnectedHandlerDelegate(OnConnected);
         _mqttClient.DisconnectedHandler = new MqttClientDisconnectedHandlerDelegate(OnDisconnected);
+    }
+
+    private void HandleOnConnectButtonClicked()
+    {
+        if (_mqttClient.IsConnected)
+        {
+            _mqttClient.DisconnectAsync();
+            _statusText.text = "Disconnected";
+            _connectButton.GetComponentInChildren<TMP_Text>().text = "Connect";
+        }
+        else
+        {
+            Connect();
+        }
+    }
+    
+    private async void Connect()
+    {
+        try
+        {
+            _statusText.text = "Connecting...";
+            _connectButton.interactable = false;
+
+            IMqttClientOptions options = CreateClientOptions();
+            await _mqttClient.ConnectAsync(options, CancellationToken.None);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Failed to connect to MQTT broker: {e.Message}");
+
+            _statusText.text = "Failed to connect";
+            _connectButton.interactable = true;
+        }
     }
     
     private IMqttClientOptions CreateClientOptions()
@@ -109,6 +126,8 @@ public class MqttClientSample : MonoBehaviour
         _unityContext.Post(_ =>
         {
             _statusText.text = "Connected";
+            _connectButton.GetComponentInChildren<TMP_Text>().text = "Disconnect";
+            _connectButton.interactable = true;
             _publishButton.interactable = true;
         }, null);
 
