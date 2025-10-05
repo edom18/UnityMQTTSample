@@ -2,6 +2,8 @@
 
 Unity で MQTT を扱うための学習用サンプルです。MQTTnet を用いた「クライアント」（接続/購読/発行）と、「組み込みブローカー（MQTT サーバ）」の双方を確認できます。ライブラリは `Assets/Packages/MQTTnet.3.1.2` に同梱されています。
 
+![UI sample](./images/ui-sample.png)
+
 ## 前提条件
 - 外部ブローカーを使う場合は、事前に起動しておきます（例: Mosquitto）。
 - デフォルト値: `host: localhost`、`port: 1883`、`topic: send/hello`、`payload: hello`
